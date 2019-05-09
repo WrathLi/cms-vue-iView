@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.liyu.cms.data.core.dao.MenuDao">
+    <!--例子http://www.2cto.com/database/201409/338155.html-->
+
+    <resultMap id="MenuResult" type="MenuOne">
+        <id column="o_id" property="id"/>
+        <result column="one_route" property="routeName"/>
+        <result column="one_title" property="title"/>
+        <result column="one_icon" property="icon"/>
+        <collection column="one_id" property="pageList" ofType="MenuPage">
+            <id column="page_id" property="id"/>
+            <result column="one_id" property="oneId"/>
+            <result column="page_route" property="routeName"/>
+            <result column="page_title" property="title"/>
+            <result column="page_icon" property="icon"/>
+        </collection>
+    </resultMap>
+
+    <resultMap id="OneResult" type="MenuOne">
+        <id column="id" property="id"/>
+        <result column="route_name" property="routeName"/>
+        <result column="title" property="title"/>
+        <result column="icon" property="icon"/>
+        <result column="sort_index" property="sortIndex"/>
+    </resultMap>
+
+    <resultMap id="PageResult" type="MenuPage">
+        <id column="id" property="id"/>
+        <result column="one_id" property="oneId"/>
+        <result column="route_name" property="routeName"/>
+        <result column="title" property="title"/>
+        <result column="icon" property="icon"/>
+        <result column="sort_index" property="sortIndex"/>
+        <result column="hide_page" property="hidePage"/>
+    </resultMap>
+
+    <select id="getMenuTree" resultMap="MenuResult">
+        select one.id as o_id,one.route_name as one_route,one.title as one_title,one.icon as one_icon,
+        page.id as page_id,page.one_id as one_id,page.route_name as page_route,page.title as page_title,
+        page.icon as page_icon
+        from tb_menu_one one,tb_menu_page page
+        WHERE one.id = page.one_id and one.deleted = 0 and page.deleted = 0
+        ORDER BY one.id ASC,page.id ASC
+    </select>
+
+
+    <select id="getAllMenu" resultMap="MenuResult">
+        select one.id as o_id,one.route_name as one_route,one.title as one_title,one.icon as one_icon,
+           page.id as page_id,page.one_id as one_id,page.route_name as page_route,page.title as page_title,
+           page.icon as page_icon
+        from tb_menu_one one,tb_menu_page page
+        WHERE one.id = page.one_id and one.deleted = 0 and page.deleted = 0 and page.hide_page = 0
+        ORDER BY one.sort_index ASC,page.sort_index ASC
+    </select>
+
+    <select id="getRoleMenu" resultMap="MenuResult">
+        select one.id as o_id,one.route_name as one_route,one.title as one_title,one.icon as one_icon,
+           page.id as page_id,page.one_id as one_id,page.route_name as page_route,page.title as page_title,
+           page.icon as page_icon
+        from tb_menu_one one,tb_menu_page page
+        WHERE one.id = page.one_id and one.deleted = 0 and page.deleted = 0 and page.hide_page = 0
+        and page.id in (select page_id from tb_role_privilege where role_id = #{roleId} and deleted = 0)
+        ORDER BY one.sort_index ASC,page.sort_index ASC
+    </select>
+
+    <select id="getMenuOneList" resultMap="OneResult">
+        select id,route_name,title,icon,sort_index
+        FROM tb_menu_one
+        WHERE deleted = 0
+        ORDER BY id ASC
+    </select>
+
+    <select id="getMenuPageList" resultMap="PageResult">
+        select id,one_id,route_name,title,icon,sort_index,hide_page
+        FROM tb_menu_page
+        WHERE deleted = 0 and one_id = #{oneId}
+        ORDER BY id ASC
+    </select>
+
+    <select id="menuOneExist" resultType="java.lang.Integer">
+        select count(*)
+        FROM tb_menu_one
+        <where>
+            <if test="oneId >= 0">
+                id != #{oneId}
+            </if>
+            and deleted = 0 and route_name = #{routeName}
+        </where>
+    </select>
+
+    <insert id="addMenuOne" parameterType="MenuOne"
+            useGeneratedKeys="true" keyProperty="id">
+        insert into tb_menu_one(route_name,title,icon,sort_index)
+        VALUES (#{routeName},#{title},#{icon},#{sortIndex})
+    </insert>
+
+    <update id="updateMenuOne" parameterType="MenuOne">
+        update tb_menu_one SET route_name = #{routeName},title = #{title},icon = #{icon},
+        sort_index = #{sortIndex}
+        WHERE id = #{id}
+    </update>
+
+    <update id="deleteMenuOne" parameterType="java.lang.Integer">
+        update tb_menu_one SET deleted = 1
+        WHERE  id = #{oneId}
+    </update>
+
+    <update id="deleteMenuPageInOne" parameterType="java.lang.Integer">
+        update tb_menu_page SET deleted = 1
+        WHERE one_id = #{oneId}
+    </update>
+
+    <select id="menuPageExist" resultType="java.lang.Integer">
+        select count(*)
+        FROM tb_menu_page
+        <where>
+            <if test="pageId >= 0">
+                id != #{pageId}
+            </if>
+            and deleted = 0 and route_name = #{routeName}
+        </where>
+    </select>
+
+    <insert id="addMenuPage" parameterType="MenuPage"
+            useGeneratedKeys="true" keyProperty="id">
+        insert into tb_menu_page(one_id,route_name,title,icon,sort_index,hide_page)
+        VALUES (#{oneId},#{routeName},#{title},#{icon},#{sortIndex},#{hidePage})
+    </insert>
+
+    <update id="updateMenuPage" parameterType="MenuPage">
+        update tb_menu_page SET route_name = #{routeName},title = #{title},icon = #{icon},
+        sort_index = #{sortIndex},hide_page = #{hidePage}
+        WHERE id = #{id}
+    </update>
+
+    <update id="deleteMenuPage" parameterType="java.lang.Integer">
+        update tb_menu_page SET deleted = 1
+        WHERE id = #{pageId}
+    </update>
+
+</mapper>

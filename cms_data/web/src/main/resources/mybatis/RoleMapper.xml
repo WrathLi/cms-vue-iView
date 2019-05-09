@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.liyu.cms.data.core.dao.RoleDao">
+    <!--例子http://www.2cto.com/database/201409/338155.html-->
+
+    <resultMap id="RoleResult" type="Role">
+        <id column="id" property="id"/>
+        <result column="name" property="name"/>
+        <result column="is_super" property="beSuper"/>
+        <result column="description" property="description"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <resultMap id="PrivilegeResult" type="RolePrivilege">
+        <id column="id" property="id"/>
+        <result column="role_id" property="roleId"/>
+        <result column="page_id" property="pageId"/>
+    </resultMap>
+
+    <update id="deletePrivilegeMenuOne" parameterType="java.lang.Integer">
+        update tb_menu_page page,tb_role_privilege role
+        SET role.deleted = 1
+        WHERE page.id = role.page_id and page.one_id = #{oneId}
+    </update>
+
+    <update id="deletePrivilegeMenuPage" parameterType="java.lang.Integer">
+        update tb_role_privilege SET deleted = 1
+        WHERE page_id = #{pageId}
+    </update>
+
+    <select id="getRoleTotalCount" resultType="java.lang.Integer">
+        select count(*)
+        FROM tb_role
+        <where>
+            <if test="searchKey != null">
+                name regexp #{searchKey}
+            </if>
+            and deleted = 0 and is_super = 0
+            ORDER BY id ASC
+        </where>
+    </select>
+
+    <select id="getRolePage" resultMap="RoleResult">
+        select id,name,is_super,description,create_time
+        FROM tb_role
+        <where>
+            <if test="searchKey != null">
+                name regexp #{searchKey}
+            </if>
+            and deleted = 0 and is_super = 0
+            ORDER BY id ASC
+        </where>
+        LIMIT #{dataIndex},#{pageSize}
+    </select>
+
+    <select id="getRoleAll" resultMap="RoleResult">
+        select id,name,is_super,description,create_time
+        FROM tb_role
+        WHERE deleted = 0 and is_super = 0
+        ORDER BY id ASC
+    </select>
+
+    <select id="roleExist" resultType="java.lang.Integer">
+        select count(*)
+        FROM tb_role
+        <where>
+            <if test="id >= 0">
+                id != #{id}
+            </if>
+            and deleted = 0 and name = #{name}
+        </where>
+    </select>
+
+    <insert id="addRole" parameterType="Role"
+            useGeneratedKeys="true" keyProperty="id">
+        insert into tb_role(name,is_super,description,create_time)
+        VALUES (#{name},#{beSuper},#{description},#{createTime})
+    </insert>
+
+    <update id="updateRole" parameterType="Role">
+        update tb_role SET name = #{name},description = #{description}
+        WHERE id = #{id}
+    </update>
+
+    <update id="deleteRole">
+        update tb_role SET deleted = 1
+        WHERE id = #{id}
+    </update>
+
+    <update id="deletePrivilegeRole">
+        update tb_role_privilege SET deleted = 1
+        WHERE role_id = #{roleId}
+    </update>
+
+    <select id="getRolePrivilege" resultType="java.lang.Integer">
+        select page_id
+        FROM tb_role_privilege
+        WHERE role_id = #{roleId} and deleted = 0
+    </select>
+
+    <update id="deleteRolePrivilege">
+        update tb_role_privilege SET deleted = 1
+        <where>
+            role_id = #{roleId} and page_id IN
+            <foreach item="item" index="index" collection="pageList" open="(" separator="," close=")">#{item}</foreach>
+        </where>
+    </update>
+
+    <insert id="addRolePrivilege" parameterType="java.util.List">
+        INSERT INTO tb_role_privilege(role_id,page_id)
+        VALUES
+        <foreach collection="list" item="item" index="index" separator=",">
+            (#{item.roleId},#{item.pageId})
+        </foreach>
+    </insert>
+
+</mapper>

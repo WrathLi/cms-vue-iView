@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.liyu.cms.data.core.dao.UserDao">
+    <!--例子http://www.2cto.com/database/201409/338155.html-->
+
+    <resultMap id="UserResult" type="UserInfo">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="nickname" property="nickname"/>
+        <result column="phone_number" property="phoneNumber"/>
+        <result column="email" property="email"/>
+        <result column="create_time" property="createTime"/>
+        <result column="role_id" property="roleId"/>
+        <result column="freezed" property="freezed"/>
+        <result column="is_super" property="beSuper"/>
+        <result column="role_name" property="roleName"/>
+    </resultMap>
+
+    <resultMap id="AllResult" type="UserInfo">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="nickname" property="nickname"/>
+        <result column="password" property="password"/>
+        <result column="phone_number" property="phoneNumber"/>
+        <result column="email" property="email"/>
+        <result column="create_time" property="createTime"/>
+        <result column="role_id" property="roleId"/>
+        <result column="freezed" property="freezed"/>
+        <result column="is_super" property="beSuper"/>
+        <result column="role_name" property="roleName"/>
+    </resultMap>
+
+    <select id="getUserTotalCount" resultType="java.lang.Integer">
+        select count(*) FROM tb_user_info
+        <where>
+            deleted = 0
+            <if test="searchKey != null">
+               and (user_id regexp #{searchKey} or nickname regexp #{searchKey})
+            </if>
+            <if test="status >= 0">
+               and freezed = #{status}
+            </if>
+        </where>
+    </select>
+
+    <select id="getUserPage" resultMap="UserResult">
+        select u.id as id,u.user_id as user_id,u.nickname as nickname,
+        u.phone_number as phone_number,u.email as email,u.create_time as create_time,u.role_id as role_id,
+        u.freezed as freezed,r.is_super as is_super,r.name as role_name
+        from tb_user_info u,tb_role r
+        <where>
+            u.role_id = r.id and u.deleted = 0
+            <if test="searchKey != null">
+               and (u.user_id regexp #{searchKey} or u.nickname regexp #{searchKey})
+            </if>
+            <if test="status >= 0">
+               and u.freezed = #{status}
+            </if>
+            ORDER BY u.id DESC
+        </where>
+        LIMIT #{dataIndex},#{pageSize}
+    </select>
+
+
+    <select id="getUserByUserId" resultMap="AllResult">
+        select u.id as id,u.user_id as user_id,u.nickname as nickname,u.password as password,
+        u.phone_number as phone_number,u.email as email,u.create_time as create_time,u.role_id as role_id,
+        u.freezed as freezed,r.is_super as is_super,r.name as role_name
+        from tb_user_info u,tb_role r
+        WHERE u.role_id = r.id and u.deleted = 0 and u.user_id = #{userId}
+        ORDER BY u.id ASC
+    </select>
+
+    <select id="userExist" resultType="java.lang.Integer">
+        select count(*) from tb_user_info
+        WHERE user_id = #{userId} and deleted = 0
+    </select>
+
+    <insert id="addUser" parameterType="UserInfo"
+            useGeneratedKeys="true" keyProperty="id">
+        insert into tb_user_info(user_id,password,nickname,phone_number,email,create_time,role_id,freezed)
+        VALUES (#{userId},#{password},#{nickname},#{phoneNumber},#{email},#{createTime},#{roleId},#{freezed})
+    </insert>
+
+    <update id="updateUser" parameterType="UserInfo">
+        update tb_user_info set nickname = #{nickname},phone_number = #{phoneNumber},email = #{email},
+        role_id = #{roleId},freezed = #{freezed}
+        WHERE id = #{id}
+    </update>
+
+    <update id="deleteUser" parameterType="java.lang.Integer">
+        update tb_user_info set deleted = 1
+        WHERE id = #{id}
+    </update>
+
+    <update id="changePassword">
+        update tb_user_info set password = #{password}
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateInfo" parameterType="UserInfo">
+        update tb_user_info set nickname = #{nickname},phone_number = #{phoneNumber},email = #{email}
+        WHERE id = #{id}
+    </update>
+
+</mapper>
