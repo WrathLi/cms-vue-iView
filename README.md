@@ -32,3 +32,6 @@
  ### 六. 用户管理
   对用户进行编辑，冻结等操作，同时可以对不同用户分配角色，每个用户只能有一个角色。
  ![foryou](https://github.com/WrathLi/cms/blob/master/imgs/6.png)
+
+github网速过慢，下面是码云上的仓库地址：
+[https://gitee.com/WrathLi/cms-vue-iView/tree/master](https://gitee.com/WrathLi/cms-vue-iView/tree/master)
